@@ -240,8 +240,8 @@ class RenderEventCalendar extends RenderBox
     }
 
     _drawRectFromDragSlots(canvas);
-    _drawRectsFromEvents(canvas);
     _drawUnavailableRanges(canvas);
+    _drawRectsFromEvents(canvas);
     _drawTimeIndicator(canvas);
 
     // Placeholder rect (top, left)
@@ -800,15 +800,6 @@ class RenderEventCalendar extends RenderBox
   void _handlePointerHoverEvent(PointerHoverEvent event) {
     final Offset cursorPosition = event.localPosition;
 
-    for (final Rect rect in _unvailableRangesRects) {
-      if (rect.contains(cursorPosition + _drawOffset)) {
-        _cursor = SystemMouseCursors.forbidden;
-        _hoveredSlot = _invalidSlot;
-        markNeedsPaint();
-        return;
-      }
-    }
-
     final Offset translatedOffset =
         _transformPositionToTimeSlotRelativeOffset(cursorPosition);
     final _TargetSlot slot = (
@@ -821,6 +812,18 @@ class RenderEventCalendar extends RenderBox
       if (drawData.rect.contains(cursorPosition + _drawOffset)) {
         winner = drawData;
         break;
+      }
+    }
+
+    if (winner == null) {
+      for (final Rect rect in _unvailableRangesRects) {
+        if (rect.contains(cursorPosition + _drawOffset)) {
+          _cursor = SystemMouseCursors.forbidden;
+          _hoveredEventDrawData = null;
+          _hoveredSlot = _invalidSlot;
+          markNeedsPaint();
+          return;
+        }
       }
     }
 

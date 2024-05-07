@@ -80,7 +80,13 @@ class _CalendarPageState extends State<CalendarPage> {
 
   final DateFormat _monthDateFormat = DateFormat.MMMM();
 
-  List<CalendarEvent> _events = <CalendarEvent>[];
+  List<CalendarEvent> _events = <CalendarEvent>[
+    CalendarEvent(
+      id: 'test',
+      start: DateTime.now().startOfDay.add(const Duration(hours: 5)),
+      end: DateTime.now().startOfDay.add(const Duration(hours: 5, minutes: 30)),
+    )
+  ];
   CalendarEvent? _event;
   Rect? _eventRect;
 
