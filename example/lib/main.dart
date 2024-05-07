@@ -218,84 +218,95 @@ class _CalendarPageState extends State<CalendarPage> {
                       );
                     },
                   ),
-                  ListenableBuilder(
-                    listenable: _calendarController,
-                    builder: (context, child) {
-                      final bool isDayView =
-                          _calendarController.viewType == EventCalendarType.day;
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: <Widget>[
-                          Builder(
-                            builder: (BuildContext context) {
-                              return SizedBox(
-                                width: 100.0,
-                                child: DropdownButtonFormField<ThemeMode>(
-                                  decoration: const InputDecoration(
-                                    label: Text('Theme'),
+                  Flexible(
+                    child: ListenableBuilder(
+                      listenable: _calendarController,
+                      builder: (BuildContext context, Widget? child) {
+                        final bool isDayView = _calendarController.viewType ==
+                            EventCalendarType.day;
+                        return Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          runSpacing: 8.0,
+                          children: <Widget>[
+                            Builder(
+                              builder: (BuildContext context) {
+                                return SizedBox(
+                                  width: 100.0,
+                                  child: DropdownButtonFormField<ThemeMode>(
+                                    decoration: const InputDecoration(
+                                      label: Text('Theme'),
+                                    ),
+                                    onChanged: (ThemeMode? value) {
+                                      if (value != null) {
+                                        App.of(context).themeMode = value;
+                                      }
+                                    },
+                                    value: App.of(context).themeMode,
+                                    items: [
+                                      for (final ThemeMode mode
+                                          in ThemeMode.values)
+                                        DropdownMenuItem(
+                                          value: mode,
+                                          child: Text(mode.name),
+                                        )
+                                    ],
                                   ),
-                                  onChanged: (ThemeMode? value) {
-                                    if (value != null) {
-                                      App.of(context).themeMode = value;
-                                    }
-                                  },
-                                  value: App.of(context).themeMode,
-                                  items: [
-                                    for (final ThemeMode mode
-                                        in ThemeMode.values)
-                                      DropdownMenuItem(
-                                        value: mode,
-                                        child: Text(mode.name),
-                                      )
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(width: 8.0),
-                          SizedBox(
-                            width: 150.0,
-                            child: DropdownButtonFormField<EventCalendarType>(
-                              decoration: const InputDecoration(
-                                label: Text('View type'),
-                              ),
-                              onChanged: (EventCalendarType? value) {
-                                if (value != null) {
-                                  _calendarController.viewType = value;
-                                }
+                                );
                               },
-                              value: _calendarController.viewType,
-                              items: [
-                                for (final EventCalendarType type
-                                    in EventCalendarType.values)
-                                  DropdownMenuItem(
-                                    value: type,
-                                    child: Text(type.name),
-                                  )
+                            ),
+                            const SizedBox(width: 8.0),
+                            SizedBox(
+                              width: 150.0,
+                              child: DropdownButtonFormField<EventCalendarType>(
+                                decoration: const InputDecoration(
+                                  label: Text('View type'),
+                                ),
+                                onChanged: (EventCalendarType? value) {
+                                  if (value != null) {
+                                    _calendarController.viewType = value;
+                                  }
+                                },
+                                value: _calendarController.viewType,
+                                items: [
+                                  for (final EventCalendarType type
+                                      in EventCalendarType.values)
+                                    DropdownMenuItem(
+                                      value: type,
+                                      child: Text(type.name),
+                                    )
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8.0),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                TextButton(
+                                  onPressed: _calendarController.today,
+                                  child: const Text('Today'),
+                                ),
+                                const SizedBox(width: 8.0),
+                                IconButton(
+                                  tooltip: isDayView
+                                      ? 'Previous day'
+                                      : 'Previous week',
+                                  onPressed: _calendarController.previousWeek,
+                                  icon: const Icon(Icons.keyboard_arrow_left),
+                                ),
+                                const SizedBox(width: 8.0),
+                                IconButton(
+                                  tooltip: isDayView ? 'Next day' : 'Next week',
+                                  onPressed: _calendarController.nextWeek,
+                                  icon: const Icon(Icons.keyboard_arrow_right),
+                                ),
                               ],
                             ),
-                          ),
-                          const SizedBox(width: 8.0),
-                          TextButton(
-                            onPressed: _calendarController.today,
-                            child: const Text('Today'),
-                          ),
-                          const SizedBox(width: 8.0),
-                          IconButton(
-                            tooltip:
-                                isDayView ? 'Previous day' : 'Previous week',
-                            onPressed: _calendarController.previousWeek,
-                            icon: const Icon(Icons.keyboard_arrow_left),
-                          ),
-                          const SizedBox(width: 8.0),
-                          IconButton(
-                            tooltip: isDayView ? 'Next day' : 'Next week',
-                            onPressed: _calendarController.nextWeek,
-                            icon: const Icon(Icons.keyboard_arrow_right),
-                          ),
-                        ],
-                      );
-                    },
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
