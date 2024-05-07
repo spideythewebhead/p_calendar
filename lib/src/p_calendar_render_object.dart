@@ -196,7 +196,7 @@ class RenderEventCalendar extends RenderBox
 
     final Paint dividerPaint = Paint()
       ..color = _calendarTheme.dividerColor
-      ..isAntiAlias = true
+      ..isAntiAlias = false
       ..strokeWidth = 0.0;
 
     if (!_hoveredSlot.isInvalid) {
