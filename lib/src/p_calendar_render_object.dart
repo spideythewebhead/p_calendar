@@ -163,9 +163,12 @@ class RenderEventCalendar extends RenderBox
           max(_biggestTimeHeaderHeight, child.size.height);
       _biggestTimeHeaderWidth = max(_biggestTimeHeaderWidth, child.size.width);
     }
+    _biggestTimeHeaderWidth = _biggestTimeHeaderWidth.ceilToDouble();
+    _biggestTimeHeaderHeight = _biggestTimeHeaderHeight.ceilToDouble();
 
     _dayColumnWidth =
-        (constraints.maxWidth - _biggestTimeHeaderWidth) / _viewType.daysCount;
+        ((constraints.maxWidth - _biggestTimeHeaderWidth) / _viewType.daysCount)
+            .ceilToDouble();
 
     final BoxConstraints dayHeaderConstraints =
         BoxConstraints(minHeight: _minItemHeight, maxWidth: _dayColumnWidth);
@@ -176,6 +179,7 @@ class RenderEventCalendar extends RenderBox
           Offset(i * _dayColumnWidth + _biggestTimeHeaderWidth, 0.0);
       _biggestDayHeaderHeight = max(_biggestDayHeaderHeight, child.size.height);
     }
+    _biggestDayHeaderHeight = _biggestDayHeaderHeight.ceilToDouble();
 
     for (int i = 0; i < 24; i += 1) {
       (children[_viewType.daysCount + i].parentData as BoxParentData).offset =
