@@ -53,7 +53,7 @@ class RenderEventCalendar extends RenderBox
     }
   }
 
-  List<CalendarEvent> get _effectEventsForWeek {
+  List<CalendarEvent> get _effectiveEventsForWeek {
     final (DateTime startDate, DateTime endDate) = switch (_viewType) {
       EventCalendarType.day => (_date.startOfDay, _date.endOfDay),
       EventCalendarType.week || EventCalendarType.businessWeek => (
@@ -85,15 +85,6 @@ class RenderEventCalendar extends RenderBox
       markNeedsPaint();
     }
   }
-
-  // DayHeaderBuilder? _dayHeaderBuilder;
-  // set dayHeaderBuilder(DayHeaderBuilder? value) {
-  //   if (value != _dayHeaderBuilder) {
-  //     _dayHeaderBuilder = value;
-  //     markNeedsLayout();
-  //     markNeedsPaint();
-  //   }
-  // }
 
   DateTime _date = DateTime.now().startOfWeek;
   set date(DateTime value) {
@@ -348,10 +339,12 @@ class RenderEventCalendar extends RenderBox
             _minutesPerSlot *
             _subSlotHeight +
         _biggestDayHeaderHeight;
-    final double endDy = (range.end.hour * 60 + range.end.minute) /
-            _minutesPerSlot *
-            _subSlotHeight +
-        _biggestDayHeaderHeight;
+
+    final int endHour =
+        !range.end.isSameDate(range.start) ? 24 : range.end.hour;
+    final double endDy =
+        (endHour * 60 + range.end.minute) / _minutesPerSlot * _subSlotHeight +
+            _biggestDayHeaderHeight;
 
     return Rect.fromLTWH(
       switch (_viewType) {
@@ -375,7 +368,7 @@ class RenderEventCalendar extends RenderBox
     final Paint rectPaint = Paint()..color = _calendarTheme.slotColor;
 
     _eventsDrawData.clear();
-    for (final CalendarEvent event in _effectEventsForWeek) {
+    for (final CalendarEvent event in _effectiveEventsForWeek) {
       final Rect rect = _getRectForDateRange(event.dateRange);
       _eventsDrawData.add(_EventDrawData(event: event, rect: rect));
 
@@ -401,14 +394,12 @@ class RenderEventCalendar extends RenderBox
       textPainter.text = TextSpan(
         children: <InlineSpan>[
           TextSpan(
-            text:
-                '${event.start.hour.toString().padLeft(2, '0')}:${event.start.minute.toString().padLeft(2, '0')}',
+            text: event.start.toFormattedTime(),
           ),
           if (!event.start.isAtSameMomentAs(event.end)) ...<InlineSpan>[
             const TextSpan(text: ' - '),
             TextSpan(
-              text:
-                  '${event.end.hour.toString().padLeft(2, '0')}:${event.end.minute.toString().padLeft(2, '0')}',
+              text: event.end.toFormattedTime(),
             ),
           ]
         ],
@@ -783,7 +774,7 @@ class RenderEventCalendar extends RenderBox
     );
     final DateRange eventDateRange = (
       start: startDate,
-      end: !endDate.isSameDate(startDate) ? startDate.endOfDay : endDate,
+      end: endDate,
     );
 
     if (await _canAddEvent?.call(eventDateRange) ?? true) {
@@ -962,6 +953,12 @@ extension on _TargetSlot {
 
   _TargetSlot _increment({int x = 0, int y = 0}) {
     return (x: x + this.x, y: y + this.y);
+  }
+}
+
+extension on DateTime {
+  String toFormattedTime() {
+    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
   }
 }
 
