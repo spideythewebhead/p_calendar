@@ -1,3 +1,8 @@
+### 0.0.1-dev.3
+
+- Add method on EventCalendarController to be able to jump on a specific date
+- Fix slot rendering when end time is on different date
+
 ### 0.0.1-dev.2
 
 - Disable anti alias on dividers drawing (Improves the rendering of the lines)
