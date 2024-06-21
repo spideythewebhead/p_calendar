@@ -3,9 +3,11 @@ part of 'p_calendar.dart';
 class EventCalendarController extends ChangeNotifier {
   EventCalendarController({
     EventCalendarType type = EventCalendarType.week,
-  }) : _viewType = type;
+  }) : _viewType = type {
+    _firstDayOfView = _firstDateBasedOnViewType(DateTime.now());
+  }
 
-  DateTime _firstDayOfView = DateTime.now().startOfWeek;
+  late DateTime _firstDayOfView;
 
   /// Returns the starting date for the current [viewType].
   DateTime get firstDayOfView => _firstDayOfView;
@@ -44,13 +46,23 @@ class EventCalendarController extends ChangeNotifier {
   }
 
   void today() {
-    _firstDayOfView = switch (_viewType) {
-      EventCalendarType.week ||
-      EventCalendarType.businessWeek =>
-        DateTime.now().startOfWeek,
-      EventCalendarType.day => DateTime.now().startOfDay,
-    };
+    _firstDayOfView = _firstDateBasedOnViewType(DateTime.now());
     _renderObject?.date = _firstDayOfView;
     notifyListeners();
+  }
+
+  void goToDate(DateTime date) {
+    _firstDayOfView = _firstDateBasedOnViewType(date);
+    _renderObject?.date = _firstDayOfView;
+    notifyListeners();
+  }
+
+  DateTime _firstDateBasedOnViewType(DateTime date) {
+    return switch (_viewType) {
+      EventCalendarType.week ||
+      EventCalendarType.businessWeek =>
+        date.startOfWeek,
+      EventCalendarType.day => date.startOfDay,
+    };
   }
 }
