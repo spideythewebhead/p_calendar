@@ -292,13 +292,14 @@ class _CalendarPageState extends State<CalendarPage> {
                                   tooltip: isDayView
                                       ? 'Previous day'
                                       : 'Previous week',
-                                  onPressed: _calendarController.previousWeek,
+                                  onPressed:
+                                      _calendarController.jumpToPreviousPage,
                                   icon: const Icon(Icons.keyboard_arrow_left),
                                 ),
                                 const SizedBox(width: 8.0),
                                 IconButton(
                                   tooltip: isDayView ? 'Next day' : 'Next week',
-                                  onPressed: _calendarController.nextWeek,
+                                  onPressed: _calendarController.jumpToNextPage,
                                   icon: const Icon(Icons.keyboard_arrow_right),
                                 ),
                               ],

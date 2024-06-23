@@ -31,14 +31,14 @@ class EventCalendarController extends ChangeNotifier {
     _renderObject?.markNeedsPaint();
   }
 
-  void previousWeek() {
+  void jumpToPreviousPage() {
     _firstDayOfView =
         _firstDayOfView.add(Duration(days: -_viewType.skipDays)).startOfDay;
     _renderObject?.date = firstDayOfView;
     notifyListeners();
   }
 
-  void nextWeek() {
+  void jumpToNextPage() {
     _firstDayOfView =
         _firstDayOfView.add(Duration(days: _viewType.skipDays)).startOfDay;
     _renderObject?.date = firstDayOfView;
