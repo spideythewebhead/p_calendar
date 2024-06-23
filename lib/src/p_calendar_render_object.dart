@@ -11,8 +11,6 @@ class RenderEventCalendar extends RenderBox
     addAll(children);
   }
 
-  late final Timer _nowUpdateTimer;
-
   final List<_EventDrawData> _eventsDrawData = <_EventDrawData>[];
 
   final List<Rect> _unavailableRangesRects = <Rect>[];
@@ -21,6 +19,8 @@ class RenderEventCalendar extends RenderBox
   late OnCalendarEventTap _onEventTap;
   late ScrollController _scrollController;
   late EventCalendarTheme _calendarTheme;
+
+  late Timer _nowUpdateTimer;
 
   @override
   void setupParentData(covariant RenderObject child) {
