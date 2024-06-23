@@ -14,7 +14,8 @@ class RenderEventCalendar extends RenderBox
   late final Timer _nowUpdateTimer;
 
   final List<_EventDrawData> _eventsDrawData = <_EventDrawData>[];
-  final List<Rect> _unvailableRangesRects = <Rect>[];
+
+  final List<Rect> _unavailableRangesRects = <Rect>[];
 
   late OnCalendarEventCreated _onEventCreated;
   late OnCalendarEventTap _onEventTap;
@@ -58,7 +59,7 @@ class RenderEventCalendar extends RenderBox
       EventCalendarType.day => (_date.startOfDay, _date.endOfDay),
       EventCalendarType.week || EventCalendarType.businessWeek => (
           _date.startOfWeek,
-          _date.startOfWeek.addDays(_viewType.daysCount).endOfDay
+          _date.startOfWeek.addDays(_viewType.daysCount).startOfDay
         ),
     };
 
@@ -78,10 +79,10 @@ class RenderEventCalendar extends RenderBox
     }
   }
 
-  List<DateRange> _unavailableRanges = const <DateRange>[];
-  set unavailableSlots(List<DateRange> value) {
-    if (value != _unavailableRanges) {
-      _unavailableRanges = value;
+  List<DateRange> _availableRanges = const <DateRange>[];
+  set availableRanges(List<DateRange> value) {
+    if (value != _availableRanges) {
+      _availableRanges = value;
       markNeedsPaint();
     }
   }
@@ -423,7 +424,7 @@ class RenderEventCalendar extends RenderBox
   }
 
   void _drawUnavailableRanges(Canvas canvas) {
-    _unvailableRangesRects.clear();
+    _unavailableRangesRects.clear();
 
     final Paint paint = Paint()
       ..color = _calendarTheme.unavailableSlotsColor
@@ -433,41 +434,61 @@ class RenderEventCalendar extends RenderBox
       EventCalendarType.day => (_date.startOfDay, _date.endOfDay),
       EventCalendarType.week || EventCalendarType.businessWeek => (
           _date.startOfWeek,
-          _date.startOfWeek.addDays(_viewType.daysCount).endOfDay,
+          _date.startOfWeek.addDays(_viewType.daysCount).startOfDay,
         ),
     };
 
-    final List<DateRange> ranges = _unavailableRanges.where((DateRange range) {
-      return range.start.isBetween(startDate, endDate) ||
-          range.end.isBetween(startDate, endDate) ||
-          (range.start.isBefore(startDate) && range.end.isAfter(startDate));
-    }).toList(growable: false);
+    final double slotsAvailableDrawHeight =
+        size.height - _biggestDayHeaderHeight - 1.0;
 
-    for (final DateRange range in ranges) {
-      for (DateRange brokenRange = (
-        // if range is expanding over multiple days clamp the start to the current date
-        // if the range start is before the start date
-        start: range.start.isBefore(startDate) ? startDate : range.start,
-        end: range.end,
-      );
-          // range start must be before the end of the range end -
-          // and before the end date
-          brokenRange.start.compareTo(brokenRange.end) <= 0 &&
-              brokenRange.start.compareTo(endDate) <= 0;
-          brokenRange = (
-        // move range start date to next day to cover the case of multiple days expand
-        start: brokenRange.start.nextDay.startOfDay,
-        end: brokenRange.end
-      )) {
-        final Rect rect = _getRectForDateRange((
-          start: brokenRange.start,
-          end: brokenRange.start.day == brokenRange.end.day
-              ? brokenRange.end
-              : brokenRange.start.endOfDay,
-        ));
-        canvas.drawRect(rect, paint);
-        _unvailableRangesRects.add(rect);
+    for (DateTime start = startDate;
+        start.isBefore(endDate);
+        start = start.addDays(1).startOfDay) {
+      final List<Rect> availableRangesRects = (_availableRanges
+          .where(
+              (DateRange range) => range.start.isBetween(start, start.endOfDay))
+          .map(_getRectForDateRange)
+          .toList(growable: false)
+        ..sort((Rect a, Rect b) => (a.top - b.top).toInt()));
+
+      if (availableRangesRects.isEmpty) {
+        _unavailableRangesRects.add(_getRectForDateRange((
+          start: start,
+          end: start.endOfDay,
+        )));
+        continue;
       }
+
+      double dy = _biggestDayHeaderHeight;
+      for (int i = 0; i < availableRangesRects.length; i += 1) {
+        final Rect rect = availableRangesRects[i];
+        if (dy >= rect.top) {
+          dy = rect.bottom;
+          continue;
+        }
+
+        _unavailableRangesRects.add(Rect.fromLTWH(
+          rect.left,
+          dy,
+          rect.width,
+          rect.top - dy,
+        ));
+        dy = rect.bottom;
+      }
+
+      if (dy < slotsAvailableDrawHeight) {
+        final Rect rect = availableRangesRects.last;
+        _unavailableRangesRects.add(Rect.fromLTWH(
+          rect.left,
+          dy,
+          rect.width,
+          slotsAvailableDrawHeight - dy,
+        ));
+      }
+    }
+
+    for (final Rect rect in _unavailableRangesRects) {
+      canvas.drawRect(rect, paint);
     }
   }
 
@@ -512,7 +533,7 @@ class RenderEventCalendar extends RenderBox
 
     final Offset cursorPosition = event.localPosition;
 
-    for (final Rect rect in _unvailableRangesRects) {
+    for (final Rect rect in _unavailableRangesRects) {
       if (rect.contains(cursorPosition + _drawOffset)) {
         return;
       }
@@ -596,7 +617,7 @@ class RenderEventCalendar extends RenderBox
   void _handlePointerMoveEvent(
     PointerEvent event, {
     required BoxHitTestEntry boxHitTestEntry,
-    required bool isFromNatureScroll,
+    required bool isFromNaturalScroll,
   }) {
     // transform global cursor position relative to slots positions
     final Offset offset = event.position.translate(
@@ -688,7 +709,7 @@ class RenderEventCalendar extends RenderBox
             !(rect.top >= other.bottom || rect.bottom <= other.top);
       }
 
-      for (final Rect unavailableRect in _unvailableRangesRects) {
+      for (final Rect unavailableRect in _unavailableRangesRects) {
         if (rectOverlapsWithOther(unavailableRect)) {
           _cursor = SystemMouseCursors.forbidden;
           markNeedsPaint();
@@ -807,7 +828,7 @@ class RenderEventCalendar extends RenderBox
     }
 
     if (winner == null) {
-      for (final Rect rect in _unvailableRangesRects) {
+      for (final Rect rect in _unavailableRangesRects) {
         if (rect.contains(cursorPosition + _drawOffset)) {
           _cursor = SystemMouseCursors.forbidden;
           _hoveredEventDrawData = null;
@@ -873,7 +894,7 @@ class RenderEventCalendar extends RenderBox
       _handlePointerMoveEvent(
         event,
         boxHitTestEntry: entry,
-        isFromNatureScroll: false,
+        isFromNaturalScroll: false,
       );
       return;
     }
@@ -891,7 +912,7 @@ class RenderEventCalendar extends RenderBox
         _handlePointerMoveEvent(
           event,
           boxHitTestEntry: entry,
-          isFromNatureScroll: true,
+          isFromNaturalScroll: true,
         );
       }
       return;

@@ -91,8 +91,8 @@ class EventCalendar extends StatefulWidget {
     required this.onEventTap,
     required this.dayHeaderBuilder,
     required this.timeHeaderBuilder,
+    this.availableRanges = const <DateRange>[],
     this.canAddEvent,
-    this.unavailableRanges = const <DateRange>[],
     this.calendarTheme,
   }) : assert(minutesPerSlot == 15 || minutesPerSlot == 30);
 
@@ -123,7 +123,9 @@ class EventCalendar extends StatefulWidget {
   final OnCalendarEventTap onEventTap;
 
   /// Date ranges that are not available for booking.
-  final List<DateRange> unavailableRanges;
+  ///
+  /// If null (default value) or empty ranges are provided then all (non overlapping) slots are available.
+  final List<DateRange> availableRanges;
 
   /// Theme for the calendar.
   final EventCalendarTheme? calendarTheme;
@@ -183,7 +185,7 @@ class _EventCalendarState extends State<EventCalendar> {
         scrollController: _scrollController,
         calendarTheme: widget.calendarTheme,
         canAddEvent: widget.canAddEvent,
-        unavailableRanges: widget.unavailableRanges,
+        availableRanges: widget.availableRanges,
         children: <Widget>[
           for (int i = 0; i < widget.controller.viewType.daysCount; i += 1)
             widget.dayHeaderBuilder(_controller.firstDayOfView.addDays(i)),
@@ -205,8 +207,8 @@ class _EventCalendarObjectWidget extends MultiChildRenderObjectWidget {
     required this.minutesPerSlot,
     required this.onEventTap,
     required this.scrollController,
+    required this.availableRanges,
     this.canAddEvent,
-    this.unavailableRanges = const <DateRange>[],
     this.calendarTheme,
     required super.children,
   }) : assert(minutesPerSlot == 15 || minutesPerSlot == 30);
@@ -225,7 +227,7 @@ class _EventCalendarObjectWidget extends MultiChildRenderObjectWidget {
 
   final ScrollController scrollController;
 
-  final List<DateRange> unavailableRanges;
+  final List<DateRange> availableRanges;
 
   final EventCalendarTheme? calendarTheme;
 
@@ -240,7 +242,7 @@ class _EventCalendarObjectWidget extends MultiChildRenderObjectWidget {
       .._minutesPerSlot = minutesPerSlot
       .._onEventTap = onEventTap
       .._scrollController = scrollController
-      .._unavailableRanges = unavailableRanges;
+      .._availableRanges = availableRanges;
 
     controller._attach(renderObject);
     return renderObject;
@@ -260,7 +262,7 @@ class _EventCalendarObjectWidget extends MultiChildRenderObjectWidget {
       ..minutesPerSlot = minutesPerSlot
       .._onEventTap = onEventTap
       .._scrollController = scrollController
-      .._unavailableRanges = unavailableRanges;
+      .._availableRanges = availableRanges;
     controller._attach(renderObject);
   }
 }

@@ -331,7 +331,7 @@ class _CalendarPageState extends State<CalendarPage> {
                   controller: _calendarController,
                   minutesPerSlot: 15,
                   events: _events,
-                  unavailableRanges: <DateRange>[
+                  availableRanges: <DateRange>[
                     (
                       start: DateTime.now().startOfDay,
                       end: DateTime.now()
@@ -352,7 +352,7 @@ class _CalendarPageState extends State<CalendarPage> {
                           .add(const Duration(hours: 20)),
                       end: DateTime.now()
                           .startOfDay
-                          .add(const Duration(days: 2, hours: 3))
+                          .add(const Duration(hours: 23))
                     ),
                   ],
                   onEventCreated: (DateRange event) async {
