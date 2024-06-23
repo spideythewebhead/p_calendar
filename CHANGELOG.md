@@ -1,3 +1,9 @@
+### 0.0.1-dev.4
+
+- Replace `unavailableRanges` with `availableRanges` so the API is easier to use (**Breaking change**)
+- Rename `nextWeek` and `previousWeek` on `EventCalendarController` to `jumpToNextPage` and `jumpToPreviousPage` (**Breaking change**)
+- Remove `final` from `_nowUpdateTimer` variable to fix an issue when the widget is re attached
+
 ### 0.0.1-dev.3
 
 - Add method on EventCalendarController to be able to jump on a specific date
