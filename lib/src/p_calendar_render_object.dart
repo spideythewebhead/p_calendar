@@ -367,41 +367,74 @@ class RenderEventCalendar extends RenderBox
       maxLines: 2,
     );
     final Paint rectPaint = Paint()..color = _calendarTheme.slotColor;
+    final (DateTime firstDateOfView, DateTime lastDateOfView) =
+        switch (_viewType) {
+      EventCalendarType.day => (_date.startOfDay, _date.endOfDay),
+      EventCalendarType.week || EventCalendarType.businessWeek => (
+          _date.startOfWeek.startOfDay,
+          _date.startOfWeek.addDays(_viewType.daysCount).startOfDay
+        )
+    };
 
     _eventsDrawData.clear();
     for (final CalendarEvent event in _effectiveEventsForWeek) {
-      final Rect rect = _getRectForDateRange(event.dateRange);
-      _eventsDrawData.add(_EventDrawData(event: event, rect: rect));
+      final List<Rect> rects = <Rect>[];
+      for (DateTime start = event.start;
+          start.isBefore(event.end);
+          start = start.addDays(1).startOfDay) {
+        if (start.isSameDate(event.end)) {
+          rects.add(_getRectForDateRange((start: start, end: event.end)));
+          break;
+        }
+
+        DateRange dateRange = (start: start, end: start.endOfDay);
+        if (!start.isBetween(firstDateOfView, lastDateOfView)) {
+          continue;
+        }
+        if (dateRange.end.isAfter(lastDateOfView)) {
+          break;
+        }
+
+        rects.add(_getRectForDateRange(dateRange));
+      }
+
+      _eventsDrawData.add(_EventDrawData(event: event, rects: rects));
 
       final bool isHovered = identical(event, _hoveredEventDrawData?.event);
-      final RRect rrect = RRect.fromRectAndRadius(
-        rect,
-        const Radius.circular(8.0),
-      );
-      canvas.drawRRect(
-        rrect,
-        rectPaint
-          ..color = (event.color ?? _calendarTheme.slotColor)
-          ..colorFilter = isHovered
-              ? const ColorFilter.matrix(<double>[
-                  1.15, 0, 0, 0, 0, //
-                  0, 1.15, 0, 0, 0,
-                  0, 0, 1.15, 0, 0,
-                  0, 0, 0, 1.15, 0,
-                ])
-              : null,
-      );
+
+      for (final Rect rect in rects) {
+        final RRect rrect = RRect.fromRectAndRadius(
+          rect,
+          const Radius.circular(8.0),
+        );
+        canvas.drawRRect(
+          rrect,
+          rectPaint
+            ..color = (event.color ?? _calendarTheme.slotColor)
+            ..colorFilter = isHovered
+                ? const ColorFilter.matrix(<double>[
+                    1.15, 0, 0, 0, 0, //
+                    0, 1.15, 0, 0, 0,
+                    0, 0, 1.15, 0, 0,
+                    0, 0, 0, 1.15, 0,
+                  ])
+                : null,
+        );
+      }
 
       textPainter.text = TextSpan(
         children: <InlineSpan>[
-          TextSpan(
-            text: event.start.toFormattedTime(),
-          ),
-          if (!event.start.isAtSameMomentAs(event.end)) ...<InlineSpan>[
-            const TextSpan(text: ' - '),
+          if (event.start
+              .isBetween(firstDateOfView, lastDateOfView)) ...<InlineSpan>[
             TextSpan(
-              text: event.end.toFormattedTime(),
+              text: event.start.toFormattedTime(),
             ),
+            if (!event.start.isAtSameMomentAs(event.end)) ...<InlineSpan>[
+              const TextSpan(text: ' - '),
+              TextSpan(
+                text: event.end.toFormattedTime(),
+              ),
+            ]
           ]
         ],
         style: TextStyle(
@@ -415,10 +448,10 @@ class RenderEventCalendar extends RenderBox
         ),
       );
       textPainter
-        ..layout(maxWidth: rrect.width)
+        ..layout(maxWidth: rects[0].width)
         ..paint(
           canvas,
-          rect.topLeft + const Offset(_padding / 4.0, _padding / 4.0),
+          rects[0].topLeft + const Offset(_padding / 4.0, _padding / 4.0),
         );
     }
   }
@@ -434,7 +467,7 @@ class RenderEventCalendar extends RenderBox
       EventCalendarType.day => (_date.startOfDay, _date.endOfDay),
       EventCalendarType.week || EventCalendarType.businessWeek => (
           _date.startOfWeek,
-          _date.startOfWeek.addDays(_viewType.daysCount).startOfDay,
+          _date.startOfWeek.addDays(_viewType.daysCount),
         ),
     };
 
@@ -540,7 +573,7 @@ class RenderEventCalendar extends RenderBox
     }
 
     for (final _EventDrawData drawData in _eventsDrawData) {
-      if (drawData.rect.contains(cursorPosition + _drawOffset)) {
+      if (drawData.rects.containsOffset(cursorPosition + _drawOffset)) {
         return;
       }
     }
@@ -717,7 +750,8 @@ class RenderEventCalendar extends RenderBox
         }
       }
 
-      for (final _EventDrawData(rect: Rect testRect) in _eventsDrawData) {
+      for (final Rect testRect
+          in _eventsDrawData.map((_EventDrawData e) => e.rects).flattened()) {
         if (rectOverlapsWithOther(testRect)) {
           _cursor = SystemMouseCursors.forbidden;
           markNeedsPaint();
@@ -750,15 +784,24 @@ class RenderEventCalendar extends RenderBox
 
     if (checkForWinningEvent) {
       _EventDrawData? winner;
+      Rect? winnerRect;
       for (final _EventDrawData drawData in _eventsDrawData) {
-        if (drawData.rect.contains(event.localPosition + _drawOffset)) {
-          winner = drawData;
+        final List<Rect> rects = drawData.rects;
+        for (final Rect rect in rects) {
+          if (rect.contains(event.localPosition + _drawOffset)) {
+            winner = drawData;
+            winnerRect = rect;
+            break;
+          }
+        }
+
+        if (winner != null) {
           break;
         }
       }
 
       if (winner != null) {
-        _onEventTap(winner.event, winner.rect);
+        _onEventTap(winner.event, winnerRect!);
         return;
       }
     }
@@ -821,7 +864,7 @@ class RenderEventCalendar extends RenderBox
 
     _EventDrawData? winner;
     for (final _EventDrawData drawData in _eventsDrawData) {
-      if (drawData.rect.contains(cursorPosition + _drawOffset)) {
+      if (drawData.rects.containsOffset(cursorPosition + _drawOffset)) {
         winner = drawData;
         break;
       }
@@ -840,8 +883,9 @@ class RenderEventCalendar extends RenderBox
     }
 
     MouseCursor newCursor = _cursor;
-    if (!identical(_hoveredEventDrawData, winner)) {
-      _hoveredEventDrawData = winner;
+    _EventDrawData? newHoveredEventDrawData = _hoveredEventDrawData;
+    if (_hoveredEventDrawData?.event.id != winner?.event.id) {
+      newHoveredEventDrawData = winner;
       newCursor =
           winner != null ? SystemMouseCursors.click : SystemMouseCursors.basic;
     } else if (winner == null && _cursor != SystemMouseCursors.basic) {
@@ -851,14 +895,18 @@ class RenderEventCalendar extends RenderBox
     _TargetSlot hoveredSlot = _invalidSlot;
 
     if (event.kind case PointerDeviceKind.mouse) {
-      if (!(winner?.rect.contains(cursorPosition) ?? false)) {
+      if (!(winner?.rects.containsOffset(cursorPosition) ?? false)) {
         hoveredSlot = slot;
       }
     }
 
-    if (newCursor != _cursor || hoveredSlot != _hoveredSlot) {
+    if (newCursor != _cursor ||
+        hoveredSlot != _hoveredSlot ||
+        (newHoveredEventDrawData?.event.id !=
+            _hoveredEventDrawData?.event.id)) {
       _cursor = newCursor;
       _hoveredSlot = hoveredSlot;
+      _hoveredEventDrawData = newHoveredEventDrawData;
       markNeedsPaint();
     }
   }
@@ -984,11 +1032,25 @@ extension on DateTime {
 }
 
 class _EventDrawData {
-  CalendarEvent event;
-  Rect rect;
-
   _EventDrawData({
     required this.event,
-    required this.rect,
+    required this.rects,
   });
+
+  CalendarEvent event;
+  List<Rect> rects;
+}
+
+extension _IterableExtension<T> on Iterable<Iterable<T>> {
+  Iterable<T> flattened() sync* {
+    for (final Iterable<T> e in this) {
+      yield* e;
+    }
+  }
+}
+
+extension on List<Rect> {
+  bool containsOffset(Offset offset) {
+    return any((Rect rect) => rect.contains(offset));
+  }
 }
