@@ -1,3 +1,7 @@
+### 0.0.1-dev.5
+
+- Add support for rendering events expanding in multiple days
+
 ### 0.0.1-dev.4
 
 - Replace `unavailableRanges` with `availableRanges` so the API is easier to use (**Breaking change**)
