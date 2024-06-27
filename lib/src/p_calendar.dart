@@ -94,7 +94,7 @@ class EventCalendar extends StatefulWidget {
     this.availableRanges = const <DateRange>[],
     this.canAddEvent,
     this.calendarTheme,
-  }) : assert(minutesPerSlot == 15 || minutesPerSlot == 30);
+  });
 
   static Future<void> disableContextMenu() async {
     if (kIsWeb) {
@@ -211,7 +211,9 @@ class _EventCalendarObjectWidget extends MultiChildRenderObjectWidget {
     this.canAddEvent,
     this.calendarTheme,
     required super.children,
-  }) : assert(minutesPerSlot == 15 || minutesPerSlot == 30);
+  }) : assert(minutesPerSlot == 15 ||
+            minutesPerSlot == 30 ||
+            minutesPerSlot == 60);
 
   final EventCalendarController controller;
 
