@@ -1,3 +1,7 @@
+### 0.0.1-dev.6
+
+- Allow slots to be 60 minutes (was only 15 and 30)
+
 ### 0.0.1-dev.5
 
 - Add support for rendering events expanding in multiple days
