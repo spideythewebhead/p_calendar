@@ -193,7 +193,7 @@ class RenderEventCalendar extends RenderBox
     final Paint dividerPaint = Paint()
       ..color = _calendarTheme.dividerColor
       ..isAntiAlias = false
-      ..strokeWidth = 0.0;
+      ..strokeWidth = 1.0;
 
     if (!_hoveredSlot.isInvalid) {
       canvas.drawRect(
@@ -580,12 +580,8 @@ class RenderEventCalendar extends RenderBox
 
     if (event.kind case PointerDeviceKind.touch || PointerDeviceKind.trackpad) {
       _handleIsAddingEventFromTouchOrTrackpadTimer =
-          Timer(const Duration(milliseconds: 200), () {
-        if (_lastPointerEvent != event) {
-          _handleIsAddingEventFromTouchOrTrackpadTimer = null;
-          unawaited(HapticFeedback.heavyImpact());
-          return;
-        }
+          Timer(const Duration(milliseconds: 300), () {
+        _handleIsAddingEventFromTouchOrTrackpadTimer = null;
 
         _isAddingEventFromTouchOrTrackpad = true;
         final Offset relativeOffset =
@@ -636,15 +632,13 @@ class RenderEventCalendar extends RenderBox
   }
 
   bool _isPointerAtViewportStartRegion(PointerEvent event) {
-    return event.position.dy - _biggestDayHeaderHeight - _subSlotHeight <=
-        _biggestDayHeaderHeight;
+    return globalToLocal(event.position).dy - _scrollOffset <=
+        _biggestDayHeaderHeight + 20.0;
   }
 
   bool _isPointerAtViewportEndRegion(PointerEvent event) {
-    return _scrollController.position.viewportDimension -
-            event.position.dy +
-            _biggestDayHeaderHeight <=
-        2.0 * _subSlotHeight;
+    return globalToLocal(event.position).dy - _scrollOffset >=
+        _scrollController.position.viewportDimension - 20.0;
   }
 
   void _handlePointerMoveEvent(
@@ -766,9 +760,9 @@ class RenderEventCalendar extends RenderBox
   }
 
   void _handlePointerUpEvent(PointerUpEvent event) async {
-    bool checkForWinningEvent = !(_isAddingEventFromTouchOrTrackpad ||
-        _isTouchScrolling ||
-        _startDragSlot != _invalidSlot);
+    bool checkForWinningEvent = _isAddingEventFromTouchOrTrackpad == false &&
+        _isTouchScrolling == false &&
+        _startDragSlot == _invalidSlot;
 
     _isAddingEventFromTouchOrTrackpad = false;
     _cursor = SystemMouseCursors.basic;
@@ -916,7 +910,11 @@ class RenderEventCalendar extends RenderBox
     assert(debugHandleEvent(event, entry));
 
     _lastPointerEvent = event;
-    _handleIsAddingEventFromTouchOrTrackpadTimer?.cancel();
+
+    final double absoluteLocalDeltaDy = event.localDelta.dy.abs();
+    if (absoluteLocalDeltaDy > 0.5) {
+      _handleIsAddingEventFromTouchOrTrackpadTimer?.cancel();
+    }
 
     if (event is PointerDownEvent) {
       _handlePointerDownEvent(event);
@@ -924,11 +922,16 @@ class RenderEventCalendar extends RenderBox
     }
 
     if (event is PointerUpEvent) {
+      _handleIsAddingEventFromTouchOrTrackpadTimer?.cancel();
+      _handleIsAddingEventFromTouchOrTrackpadTimer = null;
       _handlePointerUpEvent(event);
       return;
     }
 
     if (event is PointerMoveEvent) {
+      if (absoluteLocalDeltaDy < 0.5 && !_isAddingEventFromTouchOrTrackpad) {
+        return;
+      }
       if (event.kind == PointerDeviceKind.touch &&
           !_isAddingEventFromTouchOrTrackpad) {
         _isTouchScrolling = true;
