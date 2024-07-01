@@ -1,3 +1,7 @@
+### 0.0.1-dev.7
+
+- Improve touch handling for high sensitivity screens
+
 ### 0.0.1-dev.6
 
 - Allow slots to be 60 minutes (was only 15 and 30)
