@@ -1,3 +1,8 @@
+### 0.0.1
+
+- Fix infinite loop caused by daylight saving time change
+- Fix calendar not having correct paint bounds
+
 ### 0.0.1-dev.7
 
 - Improve touch handling for high sensitivity screens
