@@ -476,7 +476,7 @@ class RenderEventCalendar extends RenderBox
 
     for (DateTime start = startDate;
         start.isBefore(endDate);
-        start = start.addDays(1).startOfDay) {
+        start = start.addDays(1)) {
       final List<Rect> availableRangesRects = (_availableRanges
           .where(
               (DateRange range) => range.start.isBetween(start, start.endOfDay))

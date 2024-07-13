@@ -5,9 +5,11 @@ class EventCalendarController extends ChangeNotifier {
     EventCalendarType type = EventCalendarType.week,
   }) : _viewType = type {
     _firstDayOfView = _firstDateBasedOnViewType(DateTime.now());
+    _timezoneOffset = _firstDayOfView.timeZoneOffset;
   }
 
   late DateTime _firstDayOfView;
+  late Duration _timezoneOffset;
 
   /// Returns the starting date for the current [viewType].
   DateTime get firstDayOfView => _firstDayOfView;
@@ -32,15 +34,17 @@ class EventCalendarController extends ChangeNotifier {
   }
 
   void jumpToPreviousPage() {
-    _firstDayOfView =
-        _firstDayOfView.add(Duration(days: -_viewType.skipDays)).startOfDay;
+    _firstDayOfView = _firstDayOfView.add(Duration(days: -_viewType.skipDays));
+    _correctFirstDateOfView();
+
     _renderObject?.date = firstDayOfView;
     notifyListeners();
   }
 
   void jumpToNextPage() {
-    _firstDayOfView =
-        _firstDayOfView.add(Duration(days: _viewType.skipDays)).startOfDay;
+    _firstDayOfView = _firstDayOfView.add(Duration(days: _viewType.skipDays));
+    _correctFirstDateOfView();
+
     _renderObject?.date = firstDayOfView;
     notifyListeners();
   }
@@ -55,6 +59,15 @@ class EventCalendarController extends ChangeNotifier {
     _firstDayOfView = _firstDateBasedOnViewType(date);
     _renderObject?.date = _firstDayOfView;
     notifyListeners();
+  }
+
+  /// Check if the timezone offset has changed and add the difference of the hours to [_firstDayOfView]
+  void _correctFirstDateOfView() {
+    if (_firstDayOfView.timeZoneOffset != _timezoneOffset) {
+      _firstDayOfView = _firstDayOfView
+          .add((_firstDayOfView.timeZoneOffset - _timezoneOffset).abs());
+      _timezoneOffset = _firstDayOfView.timeZoneOffset;
+    }
   }
 
   DateTime _firstDateBasedOnViewType(DateTime date) {
