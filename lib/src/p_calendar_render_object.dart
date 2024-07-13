@@ -155,12 +155,12 @@ class RenderEventCalendar extends RenderBox
           max(_biggestTimeHeaderHeight, child.size.height);
       _biggestTimeHeaderWidth = max(_biggestTimeHeaderWidth, child.size.width);
     }
-    _biggestTimeHeaderWidth = _biggestTimeHeaderWidth.ceilToDouble();
-    _biggestTimeHeaderHeight = _biggestTimeHeaderHeight.ceilToDouble();
+    _biggestTimeHeaderWidth = _biggestTimeHeaderWidth.floorToDouble();
+    _biggestTimeHeaderHeight = _biggestTimeHeaderHeight.floorToDouble();
 
     _dayColumnWidth =
         ((constraints.maxWidth - _biggestTimeHeaderWidth) / _viewType.daysCount)
-            .ceilToDouble();
+            .floorToDouble();
 
     final BoxConstraints dayHeaderConstraints =
         BoxConstraints(minHeight: _minItemHeight, maxWidth: _dayColumnWidth);
@@ -171,7 +171,7 @@ class RenderEventCalendar extends RenderBox
           Offset(i * _dayColumnWidth + _biggestTimeHeaderWidth, 0.0);
       _biggestDayHeaderHeight = max(_biggestDayHeaderHeight, child.size.height);
     }
-    _biggestDayHeaderHeight = _biggestDayHeaderHeight.ceilToDouble();
+    _biggestDayHeaderHeight = _biggestDayHeaderHeight.floorToDouble();
 
     for (int i = 0; i < 24; i += 1) {
       (children[_viewType.daysCount + i].parentData as BoxParentData).offset =
@@ -180,7 +180,10 @@ class RenderEventCalendar extends RenderBox
 
     size = constraints
         .tighten(
-            height: 24 * _biggestTimeHeaderHeight + _biggestDayHeaderHeight)
+          width:
+              _dayColumnWidth * _viewType.daysCount + _biggestTimeHeaderWidth,
+          height: 24 * _biggestTimeHeaderHeight + _biggestDayHeaderHeight,
+        )
         .biggest;
   }
 
@@ -248,8 +251,12 @@ class RenderEventCalendar extends RenderBox
       final Offset childOffset = (child.parentData as BoxParentData).offset;
 
       canvas.drawRect(
-        Rect.fromLTWH(childOffset.dx, childOffset.dy, _dayColumnWidth,
-            _biggestDayHeaderHeight),
+        Rect.fromLTWH(
+          childOffset.dx,
+          childOffset.dy,
+          _dayColumnWidth,
+          _biggestDayHeaderHeight,
+        ),
         Paint()..color = _calendarTheme.backgroundColor,
       );
 
