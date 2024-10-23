@@ -2,11 +2,11 @@ import 'package:flutter/foundation.dart';
 
 extension DateTimeExtensions on DateTime {
   DateTime get startOfDay {
-    return DateTime(year, month, day);
+    return (isUtc ? DateTime.utc : DateTime.new)(year, month, day);
   }
 
   DateTime get endOfDay {
-    return DateTime(
+    return (isUtc ? DateTime.utc : DateTime.new)(
       year,
       month,
       day,
@@ -19,8 +19,21 @@ extension DateTimeExtensions on DateTime {
     );
   }
 
+  /// Adds the provided [days] (positive or negative)
+  ///
+  /// This method takes care of Daylight Saving Time
   DateTime addDays(int days) {
-    return add(Duration(days: days));
+    return (isUtc ? DateTime.utc : DateTime.new)(
+      year,
+      month,
+      day + days,
+      hour,
+      minute,
+      second,
+      millisecond,
+      // setting the microseconds 999 moves the date to the next day on web
+      microsecond,
+    );
   }
 
   DateTime get startOfWeek {
@@ -48,6 +61,6 @@ extension DateTimeExtensions on DateTime {
   }
 
   bool isToday() {
-    return isSameDate(DateTime.now());
+    return isSameDate(isUtc ? DateTime.timestamp() : DateTime.now());
   }
 }
