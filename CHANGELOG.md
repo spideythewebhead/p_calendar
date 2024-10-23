@@ -1,3 +1,7 @@
+### 0.0.2
+
+- Fix `addDays` extension to work correctly when DST occurs on the resulting date
+
 ### 0.0.1
 
 - Fix infinite loop caused by daylight saving time change
